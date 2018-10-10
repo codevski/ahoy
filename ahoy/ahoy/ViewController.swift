@@ -37,6 +37,8 @@ class ViewController: UIViewController, UITextFieldDelegate {
             state = "act"
         } else if location.text?.lowercased() == "darwin" {
             state = "nt"
+        } else {
+            state = "NA"
         }
         
         city = (location.text?.lowercased())!
@@ -52,50 +54,48 @@ class ViewController: UIViewController, UITextFieldDelegate {
             let task = URLSession.shared.dataTask(with: request as URLRequest) {
                 data, response, error in
                 
+                var message = ""
+                
                 if error != nil {
                     self.summary.text = "Error Occured"
                 } else {
                     if let unwrappedData = data {
                         let dataString = NSString(data: unwrappedData, encoding: String.Encoding.utf8.rawValue)
+
+                        var stringSeparator = """
+ area</h3>
+    <p>
+"""
                         
-//                        print(dataString!)
-                        
-                        
-                        DispatchQueue.main.async {
-                            if dataString!.contains("area") {
-                                
-                                let range = dataString!.range(of: "area</h3>")
-                                
-                                let rangeEnd = dataString!.range(of: "<p class=\"alert\">")
-                                
-//                                print(dataString)
-                                
-                                print(rangeEnd)
-//                                print(dataString!.substring(with: NSRange(location: rangeEnd.location, length: 31)))
-                                
-                                
-                               self.summary.text = NSString(string: dataString!.substring(from: range.location + 17)).substring(to: rangeEnd.location - (range.location + 33))
-                                
-//                                self.summary.text = dataString!.substring(with: NSRange(location: range.location + 31, length: rangeEnd.location - 9))
-//                                self.summary.text = "Found"
-                                
-                                
-                            }else {
-                                self.summary.text = "City not found. Please try again!"
+                        if let contentArray = dataString?.components(separatedBy: stringSeparator) {
+//                            if dataString!.contains("The page you requested was not found on this server") {
+//                                message = ""
+//                            }
+//                            else {
+                            if contentArray.count > 1 {
+                                stringSeparator = "</p>"
+
+                                let newContentArray = contentArray[1].components(separatedBy: stringSeparator)
+
+                                if newContentArray.count > 1 {
+                                    message = newContentArray[0]
+
+                                    print(contentArray[1])
+                                }
                             }
                         }
-                        
-//                        if self.testData.contains("html") {
-//                            summary.text = "Found Day"
-//                        }
                     }
                 }
+                if message == "" {
+                    message = "The weather there couldn't be found. Please try again?"
+                    
+                }
+                DispatchQueue.main.sync {
+                    self.summary.text = message
+                }
             }
-            
             task.resume()
-            
         }
-        
     }
     
     override func viewDidLoad() {
